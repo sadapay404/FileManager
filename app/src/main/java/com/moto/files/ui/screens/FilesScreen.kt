@@ -170,6 +170,7 @@ fun FilesScreen(vm: FilesVm, app: MotoFilesApp) {
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun EntryRow(e: FsEntry, selected: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
     val icon = when {

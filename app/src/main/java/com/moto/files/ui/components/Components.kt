@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -42,6 +43,7 @@ fun PillButton(
 }
 
 /** Slider with an elongated, expressive thumb and a spring-animated fill. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpressiveSlider(
     value: Float,

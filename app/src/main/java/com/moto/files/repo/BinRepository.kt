@@ -49,6 +49,7 @@ class BinRepository private constructor(context: Context) {
         if (!f.exists()) return@withContext false
         dropWhere { it.originalPath == f.absolutePath }
         rm(f)
+        true
     }
 
     suspend fun restore(item: BinItem): Boolean = withContext(Dispatchers.IO) {

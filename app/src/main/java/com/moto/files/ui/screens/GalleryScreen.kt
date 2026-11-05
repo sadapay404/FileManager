@@ -70,6 +70,7 @@ fun GalleryScreen(vm: GalleryVm) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Grid(items: List<Media>, cols: Int, onOpen: (Int) -> Unit) {
     LazyVerticalGrid(

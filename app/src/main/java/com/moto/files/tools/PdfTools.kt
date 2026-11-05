@@ -1,7 +1,6 @@
 package com.moto.files.tools
 
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.pdf.PdfDocument
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
@@ -38,6 +37,7 @@ object PdfTools {
         }
 
     private fun renderInto(src: File, doc: PdfDocument, from: Int, to: Int) {
+        var pageNum = 0
         ParcelFileDescriptor.open(src, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
             PdfRenderer(pfd).use { renderer ->
                 for (i in from until minOf(to + 1, renderer.pageCount)) {
@@ -46,9 +46,9 @@ object PdfTools {
                             page.width, page.height, Bitmap.Config.ARGB_8888)
                         page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                         val info = PdfDocument.PageInfo.Builder(
-                            page.width, page.height, doc.pageNumber + 1).create()
+                            page.width, page.height, ++pageNum).create()
                         val p = doc.startPage(info)
-                        Canvas(p.canvas).drawBitmap(bmp, 0f, 0f, null)
+                        p.canvas.drawBitmap(bmp, 0f, 0f, null)
                         doc.finishPage(p)
                         bmp.recycle()
                     }
