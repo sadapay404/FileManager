@@ -34,8 +34,14 @@ jobs:
           unzip -q /tmp/gradle.zip -d /opt
           echo "/opt/gradle-8.10.2/bin" >> "$GITHUB_PATH"
 
-      - name: Build debug APK
-        run: gradle :app:assembleDebug --stacktrace
+      - name: Build debug APK (errors surfaced as annotations)
+        run: |
+          if ! gradle :app:assembleDebug --stacktrace > /tmp/build.log 2>&1; then
+            grep -E "^e: |error:|FAILURE|What went wrong|Caused by|Exception|Could not|failed" /tmp/build.log \
+              | head -60 | while IFS= read -r l; do echo "::error ::$l"; done
+            tail -n 15 /tmp/build.log | while IFS= read -r l; do echo "::error ::TAIL: $l"; done
+            exit 1
+          fi
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -46,10 +52,9 @@ jobs:
       - name: Build release APK
         run: |
           if ! gradle :app:assembleRelease --stacktrace > /tmp/build-rel.log 2>&1; then
-            grep -E "^e: |error:" /tmp/build-rel.log | head -40 | while IFS= read -r l; do
-              echo "::error ::$l"
-            done
-            tail -n 30 /tmp/build-rel.log
+            grep -E "^e: |error:|FAILURE|What went wrong|Caused by|Exception|Could not|failed" /tmp/build-rel.log \
+              | head -60 | while IFS= read -r l; do echo "::error ::$l"; done
+            tail -n 15 /tmp/build-rel.log | while IFS= read -r l; do echo "::error ::TAIL: $l"; done
             exit 1
           fi
 
