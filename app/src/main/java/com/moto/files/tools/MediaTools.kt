@@ -48,13 +48,13 @@ object MediaTools {
             try {
                 extractor.setDataSource(src.absolutePath)
                 val track = (0 until extractor.trackCount).firstOrNull {
-                    extractor.getTrackFormat(it).getString(MediaFormat.MIMETYPE)
+                    extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)
                         ?.startsWith("video/") == true
                 } ?: return@withContext null
                 extractor.selectTrack(track)
 
                 val input = extractor.getTrackFormat(track)
-                val mime = input.getString(MediaFormat.MIMETYPE)!!
+                val mime = input.getString(MediaFormat.KEY_MIME)!!
                 val w = input.getInteger(MediaFormat.KEY_WIDTH)
                 val h = input.getInteger(MediaFormat.KEY_HEIGHT)
                 val bitrate = if (input.containsKey(MediaFormat.KEY_BIT_RATE))

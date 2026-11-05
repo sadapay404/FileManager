@@ -47,8 +47,8 @@ data class BinItem(
     val isDir: Boolean
 ) {
     val daysLeft: Int
-        get() = (BIN_DAYS - (System.currentTimeMillis() - deletedAt) / 86_400_000L)
-            .coerceIn(0, BIN_DAYS).toInt()
+        get() = (BIN_DAYS.toLong() - (System.currentTimeMillis() - deletedAt) / 86_400_000L)
+            .coerceIn(0L, BIN_DAYS.toLong()).toInt()
 
     companion object { const val BIN_DAYS = 30 }
 }

@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 import com.moto.files.model.ThemeMode
 
 /** One expressive spring reused by every transition in the app. */
-val MotoSpring = SpringSpec(
+val MotoSpring: SpringSpec<Float> = SpringSpec(
     dampingRatio = Spring.DampingRatioMediumBouncy,
     stiffness = Spring.StiffnessLow
 )

@@ -37,7 +37,8 @@ class BinRepository private constructor(context: Context) {
         )
         val dst = File(item.storedPath)
         dst.parentFile?.mkdirs()
-        if (f.renameTo(dst) || run { copy(f, dst); rm(f); true }) {
+        val moved = f.renameTo(dst) || run { copy(f, dst); rm(f); true }
+        if (moved) {
             append(item)
             item
         } else null

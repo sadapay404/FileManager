@@ -51,7 +51,7 @@ object BiometricGate {
                 .setTitle("Unlock Moto Files")
                 .setSubtitle("Fingerprint or face")
                 .setNegativeButtonText("Use app PIN")
-                .setAllowedAuthenticators(BiometricPrompt.Authenticators.BIOMETRIC_STRONG)
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
                 .build()
         )
     }

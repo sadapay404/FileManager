@@ -100,7 +100,14 @@ object Archives {
 
     private fun seven(f: File, path: String, s: SevenZOutputFile) {
         s.putArchiveEntry(s.createArchiveEntry(f, path))
-        if (f.isFile) f.inputStream().use { it.copyTo(s) }
+        if (f.isFile) {
+            // SevenZOutputFile is not an OutputStream — copy with an explicit buffer.
+            f.inputStream().use { input ->
+                val buf = ByteArray(64 * 1024)
+                var n: Int
+                while (input.read(buf).also { n = it } != -1) s.write(buf, 0, n)
+            }
+        }
         s.closeArchiveEntry()
         if (f.isDirectory) f.listFiles()?.forEach { seven(it, "$path/${it.name}", s) }
     }
