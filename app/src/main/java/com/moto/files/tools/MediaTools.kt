@@ -37,7 +37,8 @@ object MediaTools {
 
     /**
      * Re-encode the video track at [scale] × its original bitrate (min 400 kbps).
-     * Extractor → decoder → encoder surface → encoder → muxer. Audio is not carried over.
+     * Extractor → decoder → encoder surface → encoder → muxer, using the
+     * dequeueInputBuffer/dequeueOutputBuffer API. Audio is not carried over.
      */
     suspend fun shrinkVideo(src: File, dest: File, scale: Float = 0.5f): File? =
         withContext(Dispatchers.IO) {
@@ -89,10 +90,12 @@ object MediaTools {
                 var muxerOn = false
                 var inputEos = false
                 var outputEos = false
+                val info = MediaCodec.BufferInfo()
+                val timeoutUs = 10_000L
 
                 while (!outputEos) {
                     if (!inputEos) {
-                        val idx = decoder.getInputBufferIndex()
+                        val idx = decoder.dequeueInputBuffer(timeoutUs)
                         if (idx >= 0) {
                             val buf = decoder.getInputBuffer(idx)!!
                             val size = extractor.readSampleData(buf, 0)
@@ -106,23 +109,21 @@ object MediaTools {
                             }
                         }
                     }
-                    when (val o = decoder.getOutputBufferIndex()) {
-                        in 0..Int.MAX_VALUE -> {
-                            val info = decoder.getOutputBufferInfo(o)!!
-                            if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                                encoder.signalEndOfInputStream()
-                            }
-                            decoder.releaseOutputBuffer(o, info.size > 0)
+                    val o = decoder.dequeueOutputBuffer(info, timeoutUs)
+                    if (o >= 0) {
+                        if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                            encoder.signalEndOfInputStream()
                         }
+                        decoder.releaseOutputBuffer(o, info.size > 0)
                     }
-                    when (val e = encoder.getOutputBufferIndex()) {
-                        MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                    val e = encoder.dequeueOutputBuffer(info, timeoutUs)
+                    when {
+                        e == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                             muxerTrack = muxer.addTrack(encoder.outputFormat)
                             muxer.start()
                             muxerOn = true
                         }
-                        in 0..Int.MAX_VALUE -> {
-                            val info = encoder.getOutputBufferInfo(e)!!
+                        e >= 0 -> {
                             if (muxerOn && info.size > 0 &&
                                 info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG == 0) {
                                 muxer.writeSampleData(muxerTrack, encoder.getOutputBuffer(e)!!, info)
@@ -131,7 +132,6 @@ object MediaTools {
                             if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) outputEos = true
                         }
                     }
-                    Thread.sleep(1)
                 }
                 dest.takeIf { it.exists() && it.length() > 0 }
             } catch (e: Exception) {
