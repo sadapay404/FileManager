@@ -18,12 +18,13 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android-sdk@v3
+      - name: Set up Android SDK (licenses auto-accepted)
+        uses: reactivecircus/android-toolchain@v2
         with:
           api-level: 35
           build-tools: 35.0.0
-          accept-android-sdk-licenses: true
+          cmake: none
+          ndk: none
 
       - name: Install Gradle (no wrapper jar committed)
         uses: gradle/gradle-build-action@v3
