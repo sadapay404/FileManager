@@ -52,7 +52,7 @@ jobs:
       - name: Build release APK
         run: |
           if ! gradle :app:assembleRelease --stacktrace > /tmp/build-rel.log 2>&1; then
-            grep -E "^e: |error:|FAILURE|What went wrong|Caused by|Exception|Could not|failed" /tmp/build-rel.log \
+            grep -E "^e: |error:|FAILURE|What went wrong|Caused by|Exception|Could not|failed|Missing|R8" /tmp/build-rel.log \
               | head -60 | while IFS= read -r l; do echo "::error ::$l"; done
             tail -n 15 /tmp/build-rel.log | while IFS= read -r l; do echo "::error ::TAIL: $l"; done
             exit 1
