@@ -44,7 +44,14 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
 
       - name: Build release APK
-        run: gradle :app:assembleRelease --stacktrace
+        run: |
+          if ! gradle :app:assembleRelease --stacktrace > /tmp/build-rel.log 2>&1; then
+            grep -E "^e: |error:" /tmp/build-rel.log | head -40 | while IFS= read -r l; do
+              echo "::error ::$l"
+            done
+            tail -n 30 /tmp/build-rel.log
+            exit 1
+          fi
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4

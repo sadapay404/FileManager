@@ -124,10 +124,11 @@ class BinVm(app: MotoFilesApp) : ViewModel() {
 
 class SettingsVm(app: MotoFilesApp) : ViewModel() {
     private val store = app.settings
-    val settings: StateFlow<Settings> = store.observe().let { flow ->
-        MutableStateFlow(flow.value).also { state ->
-            viewModelScope.launch { flow.collect { state.value = it } }
-        }.asStateFlow()
+    private val _settings = MutableStateFlow(store.load())
+    val settings: StateFlow<Settings> = _settings.asStateFlow()
+
+    init {
+        viewModelScope.launch { store.observe().collect { _settings.value = it } }
     }
 
     fun update(block: (Settings) -> Settings) {
