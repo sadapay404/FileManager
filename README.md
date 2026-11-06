@@ -9,7 +9,7 @@ A Kotlin/Jetpack Compose file manager and gallery, designed for a minimal Motoro
 3. **File operations and trash (in progress):** SAF copy/cut/paste/rename, app-private soft-delete backup, restore, scheduled 30-day purge, confirmed empty-bin, overflow-only hard delete. Archive creation/extraction and folder operations remain outstanding.
 4. **Security (in progress):** custom PIN/password/tap-pattern verification, strong-biometric app unlock with in-app fallback, AES-GCM Vault imports and image preview, optional separate credential, organized Settings and saved themes. Credential recovery, gesture-drawn pattern and Vault video/document preview remain future work.
 5. **Advanced tools (in progress):** exact duplicate review and safe Trash cleanup, SHA-256/MD5, name/extension/size/tag search, ZIP create/extract, JPEG export, PDF merge/split, temporary read-only Wi-Fi downloads. 7z/TAR, video compression, cache cleaner, uploads and more powerful search are outstanding.
-6. **Quality and release:** accessibility, adaptive layouts, animations, tests, background-work reliability, performance, privacy review and CI.
+6. **Quality and release (foundation complete):** Gradle wrapper, CI unit test / APK build, format-aware viewers and fallback. Accessibility, adaptive tablet layouts, performance profiling, privacy review and device testing remain release blockers.
 
 ## Architecture target
 
@@ -55,4 +55,4 @@ The browser classifies formats using both the SAF provider MIME type and the fil
 | ZIP | Create and flat-file extract in Tools | Open with |
 | 7z/TAR/RAR and other formats | None | Installed archive app |
 
-CI runs `:app:testDebugUnitTest :app:assembleDebug`; install an SDK 35 / JDK 17 toolchain locally to reproduce. Manual acceptance tests still required: permission-denied/partial media grant, revoked SAF grants, SD-card providers, empty/large directories, backup/restore failure injection, authentication cancellation, Vault lock on background, PDF and codec failures, landscape/tablet layout and TalkBack. This is a phase-gated prototype, not a security-audited production release.
+CI runs `:app:testDebugUnitTest :app:assembleDebug` (passed on the phase-6 branch). Install an SDK 35 / JDK 17 toolchain locally to reproduce. Manual acceptance tests still required: permission-denied/partial media grant, revoked SAF grants, SD-card providers, empty/large directories, backup/restore failure injection, authentication cancellation, Vault lock on background, PDF and codec failures, landscape/tablet layout and TalkBack. This is a phase-gated prototype, not a security-audited production release.
