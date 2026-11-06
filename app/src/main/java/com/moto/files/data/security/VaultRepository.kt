@@ -74,6 +74,7 @@ class VaultRepository(private val context: Context) {
                     ?: error("Cannot write destination")
             }
         }
+        Unit
     }.onFailure { runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, target) } }
     @Synchronized fun remove(item: VaultItem): Result<Unit> = runCatching {
         check(File(directory, item.id).delete()) { "Could not remove encrypted file" }

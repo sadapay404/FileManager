@@ -39,8 +39,8 @@ object FileTypes {
             else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "application/octet-stream"
         }
     }
-    fun kind(name: String, mime: String?): ContentKind {
-        val type = mime(name, mime)
+    fun kind(name: String, reported: String?): ContentKind {
+        val type = mime(name, reported)
         val ext = extension(name)
         return when {
             type == "application/pdf" || ext == "pdf" -> ContentKind.PDF

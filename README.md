@@ -40,3 +40,19 @@ Vault import encrypts a **copy** using a credential-derived AES-256-GCM key; it 
 ## Phase 5 tool limits
 
 Tools operate in one selected SAF folder (not the entire device). Duplicate detection hashes matching-size files and only moves extra copies to Trash after explicit confirmation; it does not erase caches or residual files. ZIP extraction accepts flat paths only and limits sizes/counts; partial extraction may remain on error. PDF split creates separate page files; protected documents may fail. Wi-Fi sharing is read-only, bound to the active Wi-Fi IPv4 address and closes when leaving the screen or backgrounding. It uses unencrypted HTTP and an ephemeral bearer link: use only on trusted networks. No FTP or upload service is claimed.
+
+## Phase 6: format compatibility and release checks
+
+The browser classifies formats using both the SAF provider MIME type and the filename extension. Built-in previews use Coil/Android image decoders (JPEG, PNG, GIF, WebP, HEIC/HEIF and other device-supported image formats), Media3/installed Android decoders (common video and audio containers/codecs), Android PdfRenderer, and a bounded UTF-8 plain-text reader. Gallery video playback now uses Media3. Every file has an **Open with** fallback using a read-only content URI grant, including Office/OpenDocument files, e-books, archives, RAW photos and unusual codecs; availability depends on apps installed on the device. Unknown formats remain accessible, but no application can guarantee decoding *every* format or codec on every Motorola model. An "Open with" button does not imply an installed handler exists.
+
+| Format family | Built in | Fallback |
+| --- | --- | --- |
+| JPEG/PNG/WebP/GIF, device-supported HEIF/AVIF/RAW | Image viewer | Open with |
+| MP4/MKV/WebM/MOV, MP3/AAC/FLAC/OGG and device-supported codecs | Media3 player | Open with |
+| PDF | Page renderer, merge, split | Open with |
+| UTF-8 text/Markdown/CSV/JSON/XML | Bounded text reader | Open with |
+| DOC/DOCX/XLS/XLSX/PPT/PPTX/ODT/ODS/ePub | None | Installed document/reader app |
+| ZIP | Create and flat-file extract in Tools | Open with |
+| 7z/TAR/RAR and other formats | None | Installed archive app |
+
+CI runs `:app:testDebugUnitTest :app:assembleDebug`; install an SDK 35 / JDK 17 toolchain locally to reproduce. Manual acceptance tests still required: permission-denied/partial media grant, revoked SAF grants, SD-card providers, empty/large directories, backup/restore failure injection, authentication cancellation, Vault lock on background, PDF and codec failures, landscape/tablet layout and TalkBack. This is a phase-gated prototype, not a security-audited production release.

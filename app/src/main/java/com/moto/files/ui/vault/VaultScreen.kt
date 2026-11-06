@@ -37,7 +37,7 @@ fun VaultScreen(modifier: Modifier = Modifier) {
     var preview by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var confirmRemove by remember { mutableStateOf<VaultItem?>(null) }
     var exportItem by remember { mutableStateOf<VaultItem?>(null) }
-    DisposableEffect(key) { onDispose { key?.fill(0) } }
+    DisposableEffect(key) { val activeKey = key; onDispose { activeKey?.fill(0) } }
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
         val item = exportItem
         val copy = key?.copyOf()

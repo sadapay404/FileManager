@@ -136,7 +136,7 @@ fun BrowserScreen(title: String, modifier: Modifier = Modifier) {
                 if (chosen.size == 1) TextButton(enabled = !loading, onClick = { renameTarget = chosen.first(); renameText = chosen.first().name }) { Text("Rename") }
                 TextButton(enabled = !loading, onClick = { permanent = false; confirmDelete = true }) { Text("Delete") }
                 Box {
-                    IconButton(onClick = { overflow = true }) { Icon(androidx.compose.material.icons.Icons.Outlined.MoreVert, "More actions") }
+                    IconButton(onClick = { overflow = true }) { Icon(androidx.compose.material.icons.Icons.Default.MoreVert, "More actions") }
                     DropdownMenu(expanded = overflow, onDismissRequest = { overflow = false }) {
                         if (chosen.size == 1) DropdownMenuItem(text = { Text("Details & EXIF") }, onClick = {
                             overflow = false
