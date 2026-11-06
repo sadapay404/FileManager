@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -136,7 +138,7 @@ fun BrowserScreen(title: String, modifier: Modifier = Modifier) {
                 if (chosen.size == 1) TextButton(enabled = !loading, onClick = { renameTarget = chosen.first(); renameText = chosen.first().name }) { Text("Rename") }
                 TextButton(enabled = !loading, onClick = { permanent = false; confirmDelete = true }) { Text("Delete") }
                 Box {
-                    IconButton(onClick = { overflow = true }) { Icon(androidx.compose.material.icons.Icons.Default.MoreVert, "More actions") }
+                    IconButton(onClick = { overflow = true }) { Icon(Icons.Filled.MoreVert, "More actions") }
                     DropdownMenu(expanded = overflow, onDismissRequest = { overflow = false }) {
                         if (chosen.size == 1) DropdownMenuItem(text = { Text("Details & EXIF") }, onClick = {
                             overflow = false
