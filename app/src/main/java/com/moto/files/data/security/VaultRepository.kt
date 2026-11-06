@@ -60,6 +60,21 @@ class VaultRepository(private val context: Context) {
             return CipherInputStream(raw, cipher).use { it.readBytes() }
         }
     }
+    /** Explicit export to a user-selected document, with authenticated decryption. */
+    @Synchronized fun exportFile(item: VaultItem, key: ByteArray, target: Uri): Result<Unit> = runCatching {
+        val source = File(directory, item.id)
+        source.inputStream().use { raw ->
+            val iv = ByteArray(12)
+            java.io.DataInputStream(raw).readFully(iv)
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply {
+                init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, iv))
+            }
+            CipherInputStream(raw, cipher).use { decrypted ->
+                context.contentResolver.openOutputStream(target, "w")?.use { decrypted.copyTo(it) }
+                    ?: error("Cannot write destination")
+            }
+        }
+    }.onFailure { runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, target) } }
     @Synchronized fun remove(item: VaultItem): Result<Unit> = runCatching {
         check(File(directory, item.id).delete()) { "Could not remove encrypted file" }
         save(read().filterNot { it.getString("id") == item.id })

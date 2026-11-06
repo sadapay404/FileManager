@@ -36,7 +36,18 @@ fun VaultScreen(modifier: Modifier = Modifier) {
     var selected by remember { mutableStateOf<VaultItem?>(null) }
     var preview by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var confirmRemove by remember { mutableStateOf<VaultItem?>(null) }
+    var exportItem by remember { mutableStateOf<VaultItem?>(null) }
     DisposableEffect(key) { onDispose { key?.fill(0) } }
+    val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        val item = exportItem
+        val copy = key?.copyOf()
+        exportItem = null
+        if (uri != null && item != null && copy != null) scope.launch {
+            val result = withContext(Dispatchers.IO) { repo.exportFile(item, copy, uri) }
+            copy.fill(0)
+            message = result.exceptionOrNull()?.message ?: "Exported ${item.name}"
+        }
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val current = key?.copyOf()
         if (uri != null && current != null) {
@@ -121,6 +132,7 @@ fun VaultScreen(modifier: Modifier = Modifier) {
                                     else message = result.exceptionOrNull()?.message
                                 }
                             }) { Text("View") }
+                            TextButton(onClick = { exportItem = item; exporter.launch(item.name) }) { Text("Export") }
                             TextButton(onClick = { confirmRemove = item }) { Text("Remove") }
                         }
                     })

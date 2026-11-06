@@ -29,6 +29,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.moto.files.ui.components.formatBytes
 import com.moto.files.ui.viewer.UniversalViewer
+import com.moto.files.ui.viewer.FileTypes
+import androidx.exifinterface.media.ExifInterface
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -54,6 +56,7 @@ fun BrowserScreen(title: String, modifier: Modifier = Modifier) {
     var renameTarget by remember { mutableStateOf<TreeEntry?>(null) }
     var renameText by remember { mutableStateOf("") }
     var overflow by remember { mutableStateOf(false) }
+    var details by remember { mutableStateOf<String?>(null) }
     var clipboard by remember { mutableStateOf<List<TreeEntry>>(emptyList()) }
     var cut by remember { mutableStateOf(false) }
     val selected = remember { mutableStateListOf<Uri>() }
@@ -90,6 +93,9 @@ fun BrowserScreen(title: String, modifier: Modifier = Modifier) {
             revision++
         }
     }
+    if (details != null) AlertDialog(onDismissRequest = { details = null },
+        title = { Text("File details") }, text = { Text(details!!) },
+        confirmButton = { TextButton(onClick = { details = null }) { Text("Close") } })
     if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false },
         title = { Text(if (permanent) "Delete permanently?" else "Move to Trash?") },
         text = { Text(if (permanent) "These files cannot be restored." else "Files stay in Trash for up to 30 days.") },
@@ -132,6 +138,30 @@ fun BrowserScreen(title: String, modifier: Modifier = Modifier) {
                 Box {
                     IconButton(onClick = { overflow = true }) { Icon(androidx.compose.material.icons.Icons.Outlined.MoreVert, "More actions") }
                     DropdownMenu(expanded = overflow, onDismissRequest = { overflow = false }) {
+                        if (chosen.size == 1) DropdownMenuItem(text = { Text("Details & EXIF") }, onClick = {
+                            overflow = false
+                            val file = chosen.first()
+                            scope.launch {
+                                details = withContext(Dispatchers.IO) {
+                                    buildString {
+                                        appendLine("Name: ${file.name}")
+                                        appendLine("Type: ${FileTypes.mime(file.name, file.mimeType)}")
+                                        appendLine("Size: ${formatBytes(file.length)}")
+                                        if (FileTypes.mime(file.name, file.mimeType).startsWith("image/")) {
+                                            runCatching {
+                                                context.contentResolver.openInputStream(file.uri)?.use { input ->
+                                                    val exif = ExifInterface(input)
+                                                    exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)?.let { appendLine("Captured: $it") }
+                                                    exif.getAttribute(ExifInterface.TAG_MAKE)?.let { appendLine("Camera: $it") }
+                                                    exif.getAttribute(ExifInterface.TAG_MODEL)?.let { appendLine("Model: $it") }
+                                                    exif.getAttribute(ExifInterface.TAG_ORIENTATION)?.let { appendLine("Orientation: $it") }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        })
                         DropdownMenuItem(text = { Text("Delete permanently") }, onClick = { overflow = false; permanent = true; confirmDelete = true })
                     }
                 }
