@@ -1,84 +1,54 @@
 package com.moto.files
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import com.moto.files.data.security.Credentials
+import com.moto.files.ui.security.LockScreen
+import com.moto.files.ui.theme.ThemeMode
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
-import com.moto.files.navigation.AppNavHost
-import com.moto.files.security.BiometricGate
-import com.moto.files.theme.MotoFilesTheme
-import com.moto.files.ui.lock.LockGate
-import kotlinx.coroutines.launch
+import com.moto.files.data.trash.scheduleTrashPurge
+import com.moto.files.navigation.MotoFilesApp
+import com.moto.files.ui.theme.MotoTheme
 
 class MainActivity : FragmentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        val app = MotoFilesApp.instance
-
+        window.setFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE, android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        scheduleTrashPurge(this)
+        val credentials = Credentials(this)
+        val prefs = getSharedPreferences("appearance", MODE_PRIVATE)
         setContent {
-            val settings by app.settings.observe().collectAsState(initial = app.settings.load())
-
-            // Runtime permissions — required for a file manager on Android 10+.
-            val needed = buildList {
-                if (Build.VERSION.SDK_INT >= 33) {
-                    add(Manifest.permission.READ_MEDIA_IMAGES)
-                    add(Manifest.permission.READ_MEDIA_VIDEO)
-                    add(Manifest.permission.READ_MEDIA_AUDIO)
-                    add(Manifest.permission.POST_NOTIFICATIONS)
-                } else {
-                    add(Manifest.permission.READ_EXTERNAL_STORAGE)
-                }
-                if (Build.VERSION.SDK_INT >= 30) {
-                    add(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
-                }
-            }.filter {
-                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-            }
-            val launcher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestMultiplePermissions()
-            ) { }
-            LaunchedEffect(Unit) {
-                if (needed.isNotEmpty()) launcher.launch(needed.toTypedArray())
-            }
-
-            MotoFilesTheme(themeMode = settings.theme) {
-                Surface(Modifier.fillMaxSize()) {
-                    var unlocked by remember { mutableStateOf(!app.locks.lockEnabled) }
-                    if (unlocked) {
-                        AppNavHost(app)
-                    } else {
-                        LockGate(
-                            locks = app.locks,
-                            onUnlocked = { app.locks.markUnlocked(); unlocked = true },
-                            showBiometric = { cb ->
-                                BiometricGate.prompt(
-                                    this,
-                                    onSuccess = { cb(BiometricGate.Outcome.Success) },
-                                    onUseAppPin = { cb(BiometricGate.Outcome.UseAppPin) }
-                                )
-                            }
-                        )
+            var theme by remember { mutableStateOf(runCatching { ThemeMode.valueOf(prefs.getString("mode", "SYSTEM")!!) }.getOrDefault(ThemeMode.SYSTEM)) }
+            var unlocked by remember { mutableStateOf(!credentials.configured()) }
+            val lifecycle = LocalLifecycleOwner.current
+            DisposableEffect(lifecycle) {
+                var stopped = false
+                val observer = LifecycleEventObserver { _, event ->
+                    if (event == Lifecycle.Event.ON_STOP) stopped = true
+                    if (event == Lifecycle.Event.ON_START && stopped) {
+                        unlocked = !credentials.configured()
+                        stopped = false
                     }
+                }
+                lifecycle.lifecycle.addObserver(observer)
+                onDispose { lifecycle.lifecycle.removeObserver(observer) }
+            }
+            MotoTheme(theme) {
+                Surface(Modifier.fillMaxSize()) {
+                    if (unlocked) MotoFilesApp(theme, onTheme = { newTheme ->
+                        theme = newTheme
+                        prefs.edit().putString("mode", newTheme.name).apply()
+                    }, onAppLockConfigured = { unlocked = false })
+                    else LockScreen(credentials, onUnlocked = { unlocked = true })
                 }
             }
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        lifecycleScope.launch { MotoFilesApp.instance.locks.lock() }
     }
 }
