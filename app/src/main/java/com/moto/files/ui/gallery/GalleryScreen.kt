@@ -82,7 +82,21 @@ fun GalleryScreen(tab: String, modifier: Modifier = Modifier) {
     Column(modifier) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(if (selected.isNotEmpty()) "${selected.size} selected" else album ?: tab, style = MaterialTheme.typography.headlineLarge)
-            if (selected.isNotEmpty()) TextButton(onClick = { selected.clear() }) { Text("Clear") }
+            if (selected.isNotEmpty()) {
+                Row {
+                    TextButton(onClick = {
+                        val uris = ArrayList(media.filter { it.uri.toString() in selected }.map { it.uri })
+                        if (uris.isNotEmpty()) runCatching {
+                            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                                type = "*/*"
+                                putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }, "Share files"))
+                        }
+                    }) { Text("Share") }
+                    TextButton(onClick = { selected.clear() }) { Text("Clear") }
+                }
+            }
             else if (album != null) TextButton(onClick = { album = null }) { Text("All albums") }
         }
         if (!imageAccess && !videoAccess && !partialAccess) {
@@ -142,7 +156,16 @@ private fun MediaViewer(media: List<MediaEntry>, initial: MediaEntry, onClose: (
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onClose) { Icon(Icons.Outlined.ArrowBack, "Close viewer") }
-            Text(media.getOrNull(pager.currentPage)?.name.orEmpty(), maxLines = 1, style = MaterialTheme.typography.titleMedium)
+            Text(media.getOrNull(pager.currentPage)?.name.orEmpty(), modifier = Modifier.weight(1f), maxLines = 1, style = MaterialTheme.typography.titleMedium)
+            if (media.getOrNull(pager.currentPage)?.isVideo == true) {
+                TextButton(onClick = {
+                    val item = media[pager.currentPage]
+                    runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(item.uri, "video/*")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }, "Open video with")) }
+                }) { Text("Open with") }
+            }
         }
         HorizontalPager(state = pager, modifier = Modifier.weight(1f), key = { media[it].uri.toString() }) { index ->
             val item = media[index]
